@@ -1,7 +1,7 @@
 (ns ti
   (:require [clojure.string :as string] [utils :as utils])
   (:require-macros [macros.utils :as mu])
-  (:use-macros [macros.ti :only [debug warn] :as macros]))
+  (:use-macros [macros.ti :only [debug warn log-via create-creator]]))
 
 (def *platform* {:osname Titanium.Platform/osname
                  :version Titanium.Platform/version
