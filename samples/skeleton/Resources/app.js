@@ -487,6 +487,19 @@ goog.base = function(me, opt_methodName, var_args) {
 goog.scope = function(fn) {
   fn.call(goog.global)
 };
+goog.provide("goog.debug.Error");
+goog.debug.Error = function(opt_msg) {
+  if(Error.captureStackTrace) {
+    Error.captureStackTrace(this, goog.debug.Error)
+  }else {
+    this.stack = (new Error).stack || ""
+  }
+  if(opt_msg) {
+    this.message = String(opt_msg)
+  }
+};
+goog.inherits(goog.debug.Error, Error);
+goog.debug.Error.prototype.name = "CustomError";
 goog.provide("goog.string");
 goog.provide("goog.string.Unicode");
 goog.string.Unicode = {NBSP:"\u00a0"};
@@ -927,19 +940,6 @@ goog.string.parseInt = function(value) {
   }
   return NaN
 };
-goog.provide("goog.debug.Error");
-goog.debug.Error = function(opt_msg) {
-  if(Error.captureStackTrace) {
-    Error.captureStackTrace(this, goog.debug.Error)
-  }else {
-    this.stack = (new Error).stack || ""
-  }
-  if(opt_msg) {
-    this.message = String(opt_msg)
-  }
-};
-goog.inherits(goog.debug.Error, Error);
-goog.debug.Error.prototype.name = "CustomError";
 goog.provide("goog.asserts");
 goog.provide("goog.asserts.AssertionError");
 goog.require("goog.debug.Error");
@@ -21084,6 +21084,13 @@ goog.provide("styles");
 goog.require("cljs.core");
 styles._STAR_default_config_STAR_ = cljs.core.ObjMap.fromObject(["stdWin", "welcome-text"], {"stdWin":cljs.core.ObjMap.fromObject(["\ufdd0'backgroundColor", "\ufdd0'backgroundImage", "\ufdd0'barColor", "\ufdd0'layout", "\ufdd0'barImage", "\ufdd0'navBarHidden"], {"\ufdd0'backgroundColor":"lightgray", "\ufdd0'backgroundImage":null, "\ufdd0'barColor":"black", "\ufdd0'layout":"vertical", "\ufdd0'barImage":null, "\ufdd0'navBarHidden":false}), "welcome-text":cljs.core.ObjMap.fromObject(["\ufdd0'color"], 
 {"\ufdd0'color":"blue"})});
+goog.provide("dummy");
+goog.require("cljs.core");
+dummy._STAR_dummy_STAR_ = cljs.core.PersistentVector.fromArray([Titanium.UI.createTabGroup, Titanium.UI.createTab, Titanium.UI.createTextField, Titanium.UI.createTextArea, Titanium.UI.createToolbar, Titanium.UI.createTableView, Titanium.UI.createTableViewRow, Titanium.UI.createTableViewSection, Titanium.UI.createScrollView, Titanium.UI.createScrollableView, Titanium.UI.createLabel, Titanium.UI.createImageView, Titanium.UI.createWebView, Titanium.UI.createScrollBar, Titanium.UI.createSwitch, Titanium.Facebook, 
+Titanium.UI.createButton, Titanium.UI.ActivityIndicatorStyle, Titanium.UI.createActivityIndicator, Titanium.UI.ActivityIndicatorStyle, Titanium.UI.iOS, Titanium.UI.iPhone], true);
+dummy._STAR_ios_dummy_STAR_ = cljs.core.truth_(Titanium.UI.iOS) ? cljs.core.PersistentVector.fromArray([Titanium.UI.createButtonBar, Titanium.UI.iOS.createToolbar, Titanium.UI.iOS.createCoverFlowView], true) : null;
+dummy._STAR_iphone_dummy_STAR_ = cljs.core.truth_(Titanium.UI.iPhone) ? cljs.core.PersistentVector.fromArray([Titanium.UI.iPhone.RowAnimationStyle, Titanium.UI.iPhone.ActivityIndicatorStyle], true) : null;
+dummy._STAR_dummy2_STAR_ = cljs.core.PersistentVector.fromArray([Titanium.Stream, Titanium.Media, Titanium.Media.showCamera, Titanium.Media.hideCamera], true);
 goog.provide("clojure.walk");
 goog.require("cljs.core");
 clojure.walk.walk = function walk(inner, outer, form) {
@@ -22632,11 +22639,6 @@ if(Titanium.version < 3) {
   alert("Sorry - this application requires Titanium Mobile SDK 3.0 or later")
 }else {
 }
-main._STAR_dummy_STAR_ = cljs.core.PersistentVector.fromArray([Titanium.UI.createTabGroup, Titanium.UI.createTab, Titanium.UI.createTextField, Titanium.UI.createTextArea, Titanium.UI.createToolbar, Titanium.UI.createTableView, Titanium.UI.createTableViewRow, Titanium.UI.createTableViewSection, Titanium.UI.createScrollView, Titanium.UI.createScrollableView, Titanium.UI.createLabel, Titanium.UI.createImageView, Titanium.UI.createWebView, Titanium.UI.createScrollBar, Titanium.UI.createSwitch, Titanium.Facebook, 
-Titanium.UI.createButton, Titanium.UI.ActivityIndicatorStyle, Titanium.UI.createActivityIndicator, Titanium.UI.ActivityIndicatorStyle, Titanium.UI.iOS, Titanium.UI.iPhone], true);
-main._STAR_ios_dummy_STAR_ = cljs.core.truth_(Titanium.UI.iOS) ? cljs.core.PersistentVector.fromArray([Titanium.UI.createButtonBar, Titanium.UI.iOS.createToolbar, Titanium.UI.iOS.createCoverFlowView], true) : null;
-main._STAR_iphone_dummy_STAR_ = cljs.core.truth_(Titanium.UI.iPhone) ? cljs.core.PersistentVector.fromArray([Titanium.UI.iPhone.RowAnimationStyle, Titanium.UI.iPhone.ActivityIndicatorStyle], true) : null;
-main._STAR_dummy2_STAR_ = cljs.core.PersistentVector.fromArray([Titanium.Stream, Titanium.Media, Titanium.Media.showCamera, Titanium.Media.hideCamera], true);
 ti.init.call(null, "\ufdd0'config", styles._STAR_default_config_STAR_);
 var win_2960 = ti.create_window.call(null, cljs.core.ObjMap.fromObject(["\ufdd0'cls", "\ufdd0'children"], {"\ufdd0'cls":"stdWin", "\ufdd0'children":cljs.core.PersistentVector.fromArray([ti.create_label.call(null, cljs.core.ObjMap.fromObject(["\ufdd0'cls", "\ufdd0'text"], {"\ufdd0'cls":"welcome-text", "\ufdd0'text":ti.l.call(null, "Welcome!")}))], true)}));
 ti.open.call(null, win_2960);
