@@ -26,10 +26,11 @@
   [prop value]
   (.setString Titanium.App/Properties prop value))
 
+;; The UI configuration, which is a hash from IDs and 'cls' attributes to styling.
+(def ^:private *default-config* {})
 
 ;; Some forward-declared variables
 
-(declare get-prop-string)
 (declare create)
 (declare create-view)
 ;; Twitter stuff
@@ -43,10 +44,13 @@
 (defn init
   "Init the Titanium wrapper with potential support for Twitter and Titanium.Cloud,
    depending on the flags:use-cloud and :use-twitter.
+   One important keyed paremeter is hash named :config, which holds the 'CSS' styling
+   of views.
    NOTE: if using Twitter, you should set the properties 'twitterAccessTokenKey'
    and 'twitterAccessTokenSecret and ALSO pass proper 'twitter-consumer-key' and
    'twitter-consumer-secret' keyed parameters"
-  [& {:keys [use-cloud use-twitter twitter-consumer-key twitter-consumer-secret]}]
+  [& {:keys [config use-cloud use-twitter twitter-consumer-key twitter-consumer-secret]}]
+  (when config (def *default-config* config))
   (when use-twitter
     (let [twitter-entry (.-Twitter (js/require "twitter"))]
       (def *twitter-client* (twitter-entry (utils/jsify {:accessTokenKey (get-prop-string "twitterAccessTokenKey")
@@ -75,12 +79,6 @@
 ;; NOTE: you need to setup Twitter via "init"
 (declare *twitter-consumer-key*)
 (declare *twitter-consumer-secret*)
-
-(def *default-config* {})
-(defn set-default-config
-  "Set the default configurations to the given map"
-  [configs]
-  (def *default-config* configs))
 
 ;; Get default settings for the given class (or classes), where
 ;; the values are fetched from styles/*default-config*
