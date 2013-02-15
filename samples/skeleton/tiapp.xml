@@ -9,14 +9,14 @@
         <target device="android">true</target>
         <target device="blackberry">false</target>
     </deployment-targets>
-    <sdk-version>3.1.0</sdk-version>
-    <id>com.davber.loudbooks</id>
-    <name>LoudBooks</name>
+    <sdk-version>3.1.0.v20130130144406</sdk-version>
+    <id>com.davber.clotitanium.skeleton</id>
+    <name>ClotitaniumSkeleton</name>
     <version>1.0.0</version>
     <publisher>davber</publisher>
-    <url>http://apps.davber.com/LoudBooks</url>
-    <description>A mobile app reading out books aloud</description>
-    <copyright>2013 by David Bergman</copyright>
+    <url>http://blog.davber.com</url>
+    <description>A skeleton project using Clotitanium</description>
+    <copyright>2013 by davber</copyright>
     <icon>appicon.png</icon>
     <persistent-wifi>false</persistent-wifi>
     <prerendered-icon>false</prerendered-icon>
