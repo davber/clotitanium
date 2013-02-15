@@ -35,7 +35,7 @@ var dummy2 = [Titanium.Stream, Titanium.Media, Titanium.Media.showCamera,
 Ti.include("cljs/main.js");
 
 // TODO: we don't really need to require the namespace, but why not...
-goog.require("main");
+// goog.require("main");
 
 
 // Now it is high time to actually call into the main (Clojure-based) logic
