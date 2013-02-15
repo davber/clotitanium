@@ -258,13 +258,18 @@ NOTE: first argument is the UI creator for image views, accepting a hash of opti
 (defn open
   ([view] (.open (get-view view)))
   ([view opts] (.open (get-view view) (utils/jsify opts))))
+(defn set-visible
+  "Make the view visible, or invisible by passing false to
+   a :visible parameter"
+  [view & {:keys [visible] :or {visible true}}]
+  (.setVisible (get-view view) visible))
 (defn value
   "Get the value from the field, which could be a 'value' or 'text', depending
 on the field type"
   [view]
   (let [view (get-view view)]
     (if (nil? (.-value view)) (.-text view) (.-value view))))
-(defn set-val
+(defn set-value
   "Set the value of a field, which could its 'value' or 'text' property,
 depending on the type of field"
   [view value]
