@@ -9,7 +9,7 @@
 
 (def *default-bg-color* "white")
 (def *default-fg-color* "black")
-(def *default-bg-image nil)
+(def *default-bg-image* nil)
 (def *default-bar-color* "blue")
 (def *default-bar-image* nil)
 
