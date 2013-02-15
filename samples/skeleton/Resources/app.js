@@ -32,7 +32,10 @@ var iPhoneDummy = Titanium.UI.iPhone ?
 var dummy2 = [Titanium.Stream, Titanium.Media, Titanium.Media.showCamera,
   Titanium.Media.hideCamera];
 
-Ti.include("logic.js");
+Ti.include("public/cljs/main.js");
+
+// TODO: we don't really need to require the namespace, but why not...
+goog.require("main");
 
 
 // Now it is high time to actually call into the main (Clojure-based) logic
