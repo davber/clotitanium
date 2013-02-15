@@ -45,7 +45,5 @@
         </splash>
         <theme>default</theme>
     </mobileweb>
-    <modules>
-        <module platform="commonjs">ti.cloud</module>
-    </modules>
+    <modules/>
 </ti:app>

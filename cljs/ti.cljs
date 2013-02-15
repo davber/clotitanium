@@ -16,10 +16,52 @@
 (def FILL Titanium.UI/FILL)
 (def SIZE Titanium.UI/SIZE)
 
+;; Access of Titanium properties
+(defn get-prop-string
+  "Get a string property"
+  [prop]
+  (.getString Titanium.App/Properties prop))
+(defn set-prop-string
+  "Set a string property"
+  [prop value]
+  (.setString Titanium.App/Properties prop value))
+
+
 ;; Some forward-declared variables
- (declare get-prop-string)
- (declare create)
- (declare create-view)
+
+(declare get-prop-string)
+(declare create)
+(declare create-view)
+;; Twitter stuff
+(declare *twitter-client*)
+(declare *twitter-consumer-key*)
+(declare *twitter-consumer-secret*)
+(declare twitter-bind)
+;; Titanium Cloud stuff
+(declare *cloud*)
+
+(defn init
+  "Init the Titanium wrapper with potential support for Twitter and Titanium.Cloud,
+   depending on the flags:use-cloud and :use-twitter.
+   NOTE: if using Twitter, you should set the properties 'twitterAccessTokenKey'
+   and 'twitterAccessTokenSecret and ALSO pass proper 'twitter-consumer-key' and
+   'twitter-consumer-secret' keyed parameters"
+  [& {:keys [use-cloud use-twitter twitter-consumer-key twitter-consumer-secret]}]
+  (when use-twitter
+    (let [twitter-entry (.-Twitter (js/require "twitter"))]
+      (def *twitter-client* (twitter-entry (utils/jsify {:accessTokenKey (get-prop-string "twitterAccessTokenKey")
+       :accessTokenSecret (get-prop-string "twitterAccessTokenSecret")
+       :consumerKey twitter-consumer-key
+       :consumerSecret twitter-consumer-secret}))))
+      (twitter-bind "login" (fn [e]
+                          (set-prop-string "twitterAccessTokenKey" (:accessTokenKey e))
+                          (set-prop-string "twitterAccessTokenSecret" (:accessTokenSecret e))))
+      (twitter-bind "logout" (fn [e] (doseq [prop ["twitterAccessTokenKey" "twitterAccessTokenSecret"]]
+                                   (debug "setting prop to nil: " prop)
+                                   (set-prop-string prop nil)))))
+  (when use-cloud
+    (def *cloud* (js/require "ti.cloud"))))
+
 
 (defn l
   "Get the internationalized string for the given property"
@@ -27,16 +69,12 @@
   (js/L prop))
 
 (declare *my-cards*)
-(def *cloud* (js/require "ti.cloud"))
 (when *cloud* (set! (.-debug *cloud*) true))
 
 (declare *twitter-client*)
-;; NOTE: you need to setup Twitter via "init-twitter"
+;; NOTE: you need to setup Twitter via "init"
 (declare *twitter-consumer-key*)
 (declare *twitter-consumer-secret*)
-(defn init-twitter [consumer-key consumer-secret]
-  (def *twitter-consumer-key* consumer-key)
-  (def *twitter-consumer-secret* consumer-secret))
 
 (def *default-config* {})
 (defn set-default-config
@@ -69,13 +107,13 @@ property from the :id property if not given"
         cls-opts (map default-config clses)]
     (merge (apply merge cls-opts) opts)))
 
-(defn ^:export auto-purge?
+(defn auto-purge?
   "Decide whether a view should be auto-purged upon closing.
 NOTE: it is currently only looking for a property 'autoPurge' in the view (proxy) object"
   [view]
   (.-autoPurge view))
 
-(defn ^:export set-auto-purge!
+(defn set-auto-purge!
   "State that the given view should be auto-purged upon closure"
   [view]
   (set! (.-autoPurge view) true))
@@ -88,7 +126,7 @@ creation options, basically making the view unique relative a context (view)"
   [selector view]
   (swap! *views* assoc selector view))
 
-(defn ^:export uncache-view
+(defn uncache-view
   "Uncache a view, which includes all other views that has this as its context.
 NOTE: this uncaching is invoked automatically wheneer a view marked with an 'autoPurge' property
 is closed.
@@ -102,7 +140,7 @@ NOTE: one can also invoke it explicitly such as when removing a sub view from a 
     (swap! *views* #(apply dissoc % relevant-sel))
     (debug "After # views: " (count @*views*))))
 
-(defn ^:export purge-view
+(defn purge-view
   "Removes a view completely, including removing listeners and all the native UI elements
 referred to by the (proxy) view.
 This includes calling uncache-view"
@@ -185,15 +223,19 @@ pattern/selector of that value, if a string."
 ;; TODO: the Twitter integration is outside the Titanium library so it does not belong
 ;; in this wrapper module
 ;;
+
 (declare twitter-logout)
 (declare twitter-bind)
-(defn twitter-authorize [] (.authorize *twitter-client*))
+(defn twitter-authorize []
+  (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
+  (.authorize *twitter-client*))
 (defn twitter-logged-in? [] (get-prop-string "twitterAccessTokenKey"))
 (defn twitter-login-button
   "Creates a Twitter login button, that handles the action and propagates the corresponding
 login event to all listeners registered on Twitter.
 NOTE: first argument is the UI creator for image views, accepting a hash of options"
   [image-view-creator & {:as opts}]
+  (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
   (let [but (image-view-creator opts)
         flipImage #(set! (.-image but) (str "/images/twitter-" (if % "out" "in") ".png"))]
     (flipImage (twitter-logged-in?))
@@ -204,12 +246,15 @@ NOTE: first argument is the UI creator for image views, accepting a hash of opti
     but))
 (defn twitter-logout
   []
+  (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
   (.fireEvent *twitter-client* "logout" (utils/jsify {:success true})))
 (defn twitter-bind
   "Listen to a specific event from the Twitter 'sub system'"
   [evt cb]
+  (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
   (.addEventListener *twitter-client* evt (comp cb utils/cljify)))
 (defn twitter-message [msg & {:keys [cb source link picture]}]
+  (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
   (.request *twitter-client* "1.1/statuses/update.json" (utils/jsify {:status msg}) "POST" cb))
                                                    
 (defn open
@@ -268,6 +313,7 @@ depending on the type of field"
     (if take-now
       (.takePicture Titanium/Media (utils/jsify opts))
       (.showCamera Titanium/Media (utils/jsify opts)))))
+
 (defn hide-camera
   "Hide the camera"
   []
@@ -314,14 +360,6 @@ depending on the type of field"
   (when-let [file (.-file blob)]
     (let [ok (.deleteFile file)]
       (debug "kill-blob deleted file -> " ok))))
-(defn get-prop-string
-  "Get a string property"
-  [prop]
-  (.getString Titanium.App/Properties prop))
-(defn set-prop-string
-  "Set a string property"
-  [prop value]
-  (.setString Titanium.App/Properties prop value))
 (defn create-button-bar
   "We wrap creation of button bars to support non-iOS targets"
   [& [opts]]
@@ -341,8 +379,7 @@ depending on the type of field"
         (apply add view children))
       view)))
 
-
-(defn ^:export ui-creator
+(defn ui-creator
   "This will get the creator function for the given Ti element type and an optional
 platform string if a nestedly named creator is sought, such as 'iOS'"
   [type-name & [platform]]
@@ -363,7 +400,7 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
         (when children (apply add view children))
         view))))
 
-(defn ^:export create
+(defn create
   "A general creator of Ti UI elements, where the name of the element type is provided
  as the first argment. There is also an options hash required as second
  argument.
@@ -378,82 +415,76 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
 ;; TODO: provide a macro that generates these various information
 ;; points
 
-(defn ^:export info
+(defn info
   "Shows information message, using Ti.App.info"
-  ([msg] (macros/log-via :info msg))
-  ([msg obj] (macros/log-via :info (str msg (pr-str obj))) obj))
+  ([msg] (log-via :info msg))
+  ([msg obj] (log-via :info (str msg (pr-str obj))) obj))
 
-(defn ^:export warn
+(defn warn
   "Shows warning message, using Ti.App.warn"
-  ([msg] (macros/log-via :warn msg))
-  ([msg obj] (macros/log-via :warn (str msg (pr-str obj))) obj))
+  ([msg] (log-via :warn msg))
+  ([msg obj] (log-via :warn (str msg (pr-str obj))) obj))
 
-(defn ^:export error
+(defn error
   "Shows error message, using Ti.App.error"
-  ([msg] (macros/log-via :error msg))
-  ([msg obj] (macros/log-via :error (str msg (pr-str obj))) obj))
+  ([msg] (log-via :error msg))
+  ([msg obj] (log-via :error (str msg (pr-str obj))) obj))
 
-(defn ^:export debug
+(defn debug
   "Shows debug message, using Ti.App.debug.
  NOTE: we also have a special two-parameter version which expects a value to output as
  second argument, and will return that value, enabling threaded syntax."
-  ([msg] (macros/log-via :debug msg))
-  ([msg obj] (macros/log-via :debug (str msg (pr-str obj))) obj))
+  ([msg] (log-via :debug msg))
+  ([msg obj] (log-via :debug (str msg (pr-str obj))) obj))
 
-(defn ^:export nullify
+(defn nullify
   "A null operation, whose primary purpose is to allow for quick replacement of debug output calls"
   [& args])
 
-(defn ^:export nullstr
+(defn nullstr
   "A null operator replacement for the 'str' operator"
   [& args])
 
 ;; We setup a few convenience UI creators
-(macros/create-creator :window :tab-group :tab :view :label :text-field :text-area
+(create-creator :window :tab-group :tab :view :label :text-field :text-area
                        :table-view :table-view-row :button :scroll-view
                        :web-view :image-view :toolbar :activity-indicator
                        :scrollable-view :switch :table-view-section)
 
 
 (defn photos-create [opts cb] 
+  (when-not *cloud*
+    (throw "The Titanium.Cloud was not initialized properly. Use 'init' with :use-cloud set to true"))
   (let [js-opts (utils/jsify opts)]
     (debug "photos-create with opts " opts)
     (debug "... having photo property (in JS): " (.-photo js-opts))
     (.create (.-Photos *cloud*)
       (utils/jsify opts) (comp cb utils/cljify))))
 (defn photos-show [opts cb]
+  (when-not *cloud*
+    (throw "The Titanium.Cloud was not initialized properly. Use 'init' with :use-cloud set to true"))
   (debug "photos-show with opts " opts)
   (.show (.-Photos *cloud*)
     (utils/jsify opts) (comp cb utils/cljify)))
 
 ;; Wrapper for the Cloud.Objects API
+;; NOTE: be sure to initialize with :use-cloud set to true before using this function
 
-(defn ^:export objects [meth opts & [cb]]
+(defn objects [meth opts & [cb]]
+  (when-not *cloud*
+    (throw "The Titanium.Cloud was not initialized properly. Use 'init' with :use-cloud set to true"))
   (let [js-opts (utils/jsify opts)]
     ((aget (.-Objects *cloud*) meth) js-opts (fn [e] (when cb (cb (utils/cljify e)))))))
 
-(defn ^:export listen
+
+(defn listen
   "Listen to global Titanium App events"
   [evt cb]
   (.addEventListener Titanium/App evt
     (comp cb utils/cljify)))
 
-(defn ^:export fire
+(defn fire
   "Fire a global event"
   [evt evt-obj]
   (.fireEvent Titanium/App evt
     (utils/jsify evt-obj)))
-
-(def TWITTER (.-Twitter (js/require "twitter")))
-(def *twitter-client* (TWITTER (utils/jsify {:accessTokenKey (get-prop-string "twitterAccessTokenKey")
-                                             :accessTokenSecret (get-prop-string "twitterAccessTokenSecret")
-                                             :consumerKey *twitter-consumer-key*
-                                             :consumerSecret *twitter-consumer-secret*})))
-(when *twitter-client*
-  (twitter-bind "login" (fn [e]
-                          (set-prop-string "twitterAccessTokenKey" (:accessTokenKey e))
-                          (set-prop-string "twitterAccessTokenSecret" (:accessTokenSecret e))))
-  (twitter-bind "logout" (fn [e] (doseq [prop ["twitterAccessTokenKey" "twitterAccessTokenSecret"]]
-                                   (debug "setting prop to nil: " prop)
-                                   (set-prop-string prop nil)))))
-
