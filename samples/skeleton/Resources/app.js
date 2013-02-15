@@ -32,7 +32,7 @@ var iPhoneDummy = Titanium.UI.iPhone ?
 var dummy2 = [Titanium.Stream, Titanium.Media, Titanium.Media.showCamera,
   Titanium.Media.hideCamera];
 
-Ti.include("public/cljs/main.js");
+Ti.include("cljs/main.js");
 
 // TODO: we don't really need to require the namespace, but why not...
 goog.require("main");
