@@ -1,4 +1,4 @@
 target/
-Resources/public/cljs/
+Resources/cljs/
 .settings/
 build/
