@@ -1,0 +1,3 @@
+[submodule "modules/cljsutils"]
+	path = modules/cljsutils
+	url = git@github.com:davber/cljsutils.git
