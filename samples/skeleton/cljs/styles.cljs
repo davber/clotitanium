@@ -8,6 +8,6 @@
 (def *default-config*
   {;; General settings for main views, tab groups and fields
    "stdWin" {:backgroundColor "lightgray" :backgroundImage nil
-             :barColor "black"
+             :barColor "black" :layout "vertical"
              :barImage nil :navBarHidden false}
    "welcome-text" {:color "blue"}})
