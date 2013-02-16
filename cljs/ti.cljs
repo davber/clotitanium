@@ -272,8 +272,7 @@ NOTE: first argument is the UI creator for image views, accepting a hash of opti
   (.request *twitter-client* "1.1/statuses/update.json" (utils/jsify {:status msg}) "POST" cb))
                                                    
 (defn open
-  ([view] (.open (get-view view)))
-  ([view opts] (.open (get-view view) (utils/jsify opts))))
+  [view & [opts]] (.open (get-view view) (when opts (utils/jsify opts))))
 (defn set-visible
   "Make the view visible, or invisible by passing false to
    a :visible parameter"
@@ -504,7 +503,7 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
 
 (defn fire
   "Fire a global event"
-  [evt evt-obj]
+  [evt evt-obj & {:keys [keep-clj]}]
   (.fireEvent Titanium/App evt
-    (utils/jsify evt-obj)))
+    ((if keep-clj identity utils/jsify) evt-obj)))
 
