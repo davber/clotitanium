@@ -4,6 +4,7 @@
   :plugins [[lein-cljsbuild "0.3.0"]]
   :source-paths ["../../modules/cljsutils/cljs-macros" "../../cljs-macros"]
   :cljsbuild {
+    :repl-listen-port 9191
     :builds [
       {:source-paths ["../../modules/cljsutils/cljs"  "../../cljs" "cljs" ]
        :compiler {

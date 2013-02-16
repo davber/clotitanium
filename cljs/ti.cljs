@@ -12,6 +12,7 @@
 (defn ipad? [] (= (:osname *platform*) "ipad"))
 (defn ios? [] (or (iphone?) (ipad?)))
 (defn android? [] (= (:osname *platform*) "android"))
+(defn web? [] (= (:osname *platform*) "mobileweb"))
 
 (def FILL Titanium.UI/FILL)
 (def SIZE Titanium.UI/SIZE)
@@ -80,12 +81,13 @@
 (declare *twitter-consumer-key*)
 (declare *twitter-consumer-secret*)
 
-;; Get default settings for the given class (or classes), where
-;; the values are fetched from styles/*default-config*
+;; Get default settings for the given class (or classes)
 (defn- default-config
-  "Get default configuration for specific classes"
+  "Get default configuration for specific classes.
+This treats"
   [clses]
-  (apply merge (map (partial get *default-config*) (string/split clses #" "))))
+  (let [keys (map keyword (string/split (name clses) #" "))]
+    (apply merge (map (partial get *default-config*) keys))))
 
 ;; Containts a mapping from selectors to the actual views. The selectors are
 ;; either strings or maps with :selector and :context
@@ -93,17 +95,19 @@
 
 (defn- extend-config
   "Extend the given configuration based on :cls, including setting the :cls
-property from the :id property if not given"
+property from the :id property if not given. This includes changing :cls
+and :id attributes to keywords"
   [opts]
   
   ;; We get the options for all classes and the ID and merge those with
   ;; the explicit options
   
-  (let [explicit-clses (if (empty? (:cls opts)) [] (string/split (:cls opts) #" "))
-        derived-clses (if (empty? (:id opts)) [] [(:id opts)])
+  (let [explicit-clses (if (empty? (:cls opts)) [] (map keyword (string/split (-> opts :cls name) #" ")))
+        derived-clses (if (empty? (:id opts)) [] [(-> opts :id name keyword)])
         clses (set (concat explicit-clses derived-clses))
-        cls-opts (map default-config clses)]
-    (merge (apply merge cls-opts) opts)))
+        cls-opts (map default-config clses)
+        extended-opts (merge (apply merge cls-opts) opts)]
+    extended-opts))
 
 (defn auto-purge?
   "Decide whether a view should be auto-purged upon closing.
@@ -118,11 +122,16 @@ NOTE: it is currently only looking for a property 'autoPurge' in the view (proxy
 
 (defn- cache-view
   "Cache a view given the passed selector, which is currently
-assumed to be the :id.
+assumed to be the :id. We convert the selector to a keyword.
 NOTE: it is automatically invoked upon creation of views, which can have a special :context key as one of the
 creation options, basically making the view unique relative a context (view)"
   [selector view]
-  (swap! *views* assoc selector view))
+  ;; If the selector is not nameable, we catch the exception
+  (try
+    (let [key (-> selector name keyword)]
+      (swap! *views* assoc key view))
+    (catch js/Error err
+      (warn "cache-view got a weird selector: " selector))))
 
 (defn uncache-view
   "Uncache a view, which includes all other views that has this as its context.
@@ -146,18 +155,25 @@ This includes calling uncache-view"
   (uncache-view view))
 
 (defn- select-view
-  "Select the view based on the given selector.
-NOTE: this is always zero or one view.
+  "Select the view based on the given selector, or nil if it can't be found.
+NOTE: this is always zero or one view. We convert selectors to
+keywords.
 TODO: right now we assume the selector is the :id of a view"
   [selector]
-  (get @*views* selector))
+  ;; We watch out for weird selectors, in which case yield nil
+  (try
+    (let [key (-> selector name keyword)]
+      (get @*views* key))
+    (catch js/Error err
+      ;; do nothing
+      )))
 
 (defn get-view
   "Get the view associated with the parameter, which could either
 be the value itself, if a view, or the view corresponding to the
 pattern/selector of that value, if a string."
   [selector]
-  (let [view (or (select-view selector) selector)]
+  (let [view ((some-fn select-view identity) selector)]
     (when ((some-fn map? not string?) view)
       (throw (js/Error. (str "could not find view for selector " selector))))
     view))

@@ -2,4 +2,6 @@ target/
 Resources/cljs/
 .settings/
 build/
+out/
+repl/
 *.log
