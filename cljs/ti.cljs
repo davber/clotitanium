@@ -84,7 +84,7 @@
 ;; Get default settings for the given class (or classes)
 (defn- default-config
   "Get default configuration for specific classes.
-This treats"
+This also converts the classes in the string to keywords"
   [clses]
   (let [keys (map keyword (string/split (name clses) #" "))]
     (apply merge (map (partial get *default-config*) keys))))
@@ -507,3 +507,4 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
   [evt evt-obj]
   (.fireEvent Titanium/App evt
     (utils/jsify evt-obj)))
+
