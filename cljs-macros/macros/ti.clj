@@ -3,7 +3,7 @@
   "This module provides some macros for dealing with Titanium UI in ClojureScript"
   (:require [clojure.string :as string] [macros.utils :as mutils]))
 
-(defmacro ^:export create-creator
+(defmacro create-creator
   "Defines a UI creator based on the given type or types, where the
  name of the creator is create-<type>. It uses an underlying
  function create, so that function needs to exist and be accessible
