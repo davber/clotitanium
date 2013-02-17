@@ -160,13 +160,9 @@ NOTE: this is always zero or one view. We convert selectors to
 keywords.
 TODO: right now we assume the selector is the :id of a view"
   [selector]
-  ;; We watch out for weird selectors, in which case yield nil
-  (try
+  (when ((some-fn symbol? keyword? string?) selector)
     (let [key (-> selector name keyword)]
-      (get @*views* key))
-    (catch js/Error err
-      ;; do nothing
-      )))
+        (get @*views* key))))
 
 (defn get-view
   "Get the view associated with the parameter, which could either
