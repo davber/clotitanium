@@ -1,2 +1,3 @@
 target/
-Resources/public/cljs/
+Resources/app.js
+

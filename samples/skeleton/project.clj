@@ -6,7 +6,7 @@
   :cljsbuild {
     :repl-listen-port 9191
     :builds [
-      {:source-paths ["../../modules/cljsutils/cljs"  "../../cljs" "cljs" ]
+      {:source-paths ["../../modules/cljsutils/cljs"  "../../cljs" "cljs"]
        :compiler {
        	:output-to "Resources/app.js"
        	:optimizations :whitespace

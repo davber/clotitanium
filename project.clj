@@ -5,7 +5,7 @@
   :source-paths ["modules/cljsutils/cljs-macros" "cljs-macros"]
   :cljsbuild {
     :builds [
-      {:source-paths ["modules/cljsutils/cljs"  "cljs" ]
+      {:source-paths ["modules/cljsutils/cljs"  "cljs"]
        :compiler {
        	:output-to "Resources/app.js"
        	:optimizations :whitespace

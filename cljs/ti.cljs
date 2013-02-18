@@ -1,5 +1,5 @@
 (ns ti
-  (:require [clojure.string :as string] [utils :as utils])
+  (:require [clojure.string :as string] [utils :as utils] twitter)
   (:require-macros [macros.utils :as mu])
   (:use-macros [macros.ti :only [debug warn log-via create-creator]]))
 
@@ -53,7 +53,7 @@
   [& {:keys [config use-cloud use-twitter twitter-consumer-key twitter-consumer-secret]}]
   (when config (def *default-config* config))
   (when use-twitter
-    (let [twitter-entry (.-Twitter (js/require "twitter"))]
+    (let [twitter-entry twitter/Twitter]
       (def *twitter-client* (twitter-entry (utils/jsify {:accessTokenKey (get-prop-string "twitterAccessTokenKey")
        :accessTokenSecret (get-prop-string "twitterAccessTokenSecret")
        :consumerKey twitter-consumer-key
