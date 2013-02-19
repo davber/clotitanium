@@ -492,10 +492,14 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
 
 
 (defn listen
-  "Listen to global Titanium App events"
-  [evt cb]
+  "Listen to global Titanium App events.
+NOTE: we have to make sure to register listeners with the same
+flag value for 'keep-clj' as for the firing of such events.
+TODO: be intelligent and automatically convert the event object iff
+it is indeed a JS object"
+  [evt cb & {:keys [keep-clj]}]
   (.addEventListener Titanium/App evt
-    (comp cb utils/cljify)))
+    (if keep-clj cb (comp cb utils/cljify))))
 
 (defn fire
   "Fire a global event"
