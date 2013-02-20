@@ -491,19 +491,37 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
     ((aget (.-Objects *cloud*) meth) js-opts (fn [e] (when cb (cb (utils/cljify e)))))))
 
 
+(defn- event-encoder
+  "Yields a function encoding a global event's dictionary entries into proper
+JS or Clojure objects, according to the :keep-clj flag.
+The resulting event object is at the top level always a JS
+object"
+  [& [keep-clj]]
+  #(let [js-dict (js-obj)]
+    (doseq [[k v] %]
+      (aset js-dict (name k) (if keep-clj v (utils/jsify v))))
+    js-dict))
+
+(defn- event-decoder
+  "Yields a function decoding a global event.
+NOTE: this is almost but not entirely the duality of 'event-encoder'
+since it yields an entire (Clojure-formatted) event object"
+  [& [keep-clj]]
+  #(let [convert (if keep-clj identity utils/cljify)]
+     ;; TODO: we force evaluation (doall...) in order to facilitate
+     ;; debugging
+     (into {} (doall (map (juxt (comp keyword name) (comp convert (partial aget %))) (js-keys %))))))
+
 (defn listen
   "Listen to global Titanium App events.
 NOTE: we have to make sure to register listeners with the same
-flag value for 'keep-clj' as for the firing of such events.
-TODO: be intelligent and automatically convert the event object iff
-it is indeed a JS object"
+flag value for 'keep-clj' as for the firing of such events."
   [evt cb & {:keys [keep-clj]}]
   (.addEventListener Titanium/App evt
-    (if keep-clj cb (comp cb utils/cljify))))
+    (comp cb (event-decoder keep-clj))))
 
 (defn fire
   "Fire a global event"
   [evt evt-obj & {:keys [keep-clj]}]
-  (.fireEvent Titanium/App evt
-    ((if keep-clj identity utils/jsify) evt-obj)))
-
+  (let [encoded-evt ((event-encoder keep-clj) evt-obj)]
+    (.fireEvent Titanium/App evt encoded-evt)))
