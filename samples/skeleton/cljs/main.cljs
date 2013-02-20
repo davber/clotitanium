@@ -6,9 +6,6 @@
   	;; [clojure.browser.repl :as repl]
   	))
 
-(when (< Titanium/version 3.0)
-  (js/alert "Sorry - this application requires Titanium Mobile SDK 3.0 or later"))
-
 ;; We connect to a REPL server if we reside in a web environment
 (when (ti/web?) (repl/connect "http://localhost:9191/repl"))
 
