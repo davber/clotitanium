@@ -290,7 +290,9 @@ depending on the type of field"
     (when (.-setValue view)
       (.setValue view value))
     (when (.-setText view)
-      (.setText view value))))
+      (.setText view value))
+    (when (.-setTitle view)
+      (.setTitle view value))))
 (defn rows [table-view]
   (mapcat #(.-rows %) (sections table-view)))
 (defn open [view]
