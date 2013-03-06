@@ -57,24 +57,24 @@ twitter.Twitter = (function(global) {
   function createAuthWindow() {
     var self = this,
         oauth = this.oauthClient,
-        webViewWindow = Titanium.UI.createWindow({title: this.windowTitle}),
+        webViewWindow = Titanium.UI.createWindow({"title": this.windowTitle}),
         webView = Titanium.UI.createWebView(),
         loadingOverlay = Titanium.UI.createView({
-          backgroundColor: 'black',
-          opacity: 0.7,
-          zIndex: 1
+          "backgroundColor": 'black',
+          "opacity": 0.7,
+          "zIndex": 1
         }),
         actInd = Titanium.UI.createActivityIndicator({
-          height: 50,
-          width: 10,
-          message: 'Loading...',
-          color: 'white'
+          "height": 50,
+          "width": 10,
+          "message": 'Loading...',
+          "color": 'white'
         }),
         closeButton = Titanium.UI.createButton({
-          title: "Close"
+          "title": "Close"
         }),
         backButton = Titanium.UI.createButton({
-          title: "Back"
+          "title": "Back"
         });
 
     this.webView = webView;
@@ -84,16 +84,16 @@ twitter.Twitter = (function(global) {
     actInd.show();
     loadingOverlay.add(actInd);
     webViewWindow.add(loadingOverlay);
-    webViewWindow.open({modal: true});
+    webViewWindow.open({"modal": true});
     
     webViewWindow.add(webView);
 
     closeButton.addEventListener('click', function(e) {
       webViewWindow.close();
       self.fireEvent('cancel', {
-        success: false,
-        error: "The user cancelled.",
-        result: null
+        "success": false,
+        "error": "The user cancelled.",
+        "result": null
       });
     });
 
@@ -142,10 +142,10 @@ twitter.Twitter = (function(global) {
           oauth.fetchAccessToken(function(data) {
             var returnedParams = oauth.parseTokenRequest(data.text);
             self.fireEvent('login', {
-              success: true,
-              error: false,
-              accessTokenKey: returnedParams.oauth_token,
-              accessTokenSecret: returnedParams.oauth_token_secret
+              "success": true,
+              "error": false,
+              "accessTokenKey": returnedParams.oauth_token,
+              "accessTokenSecret": returnedParams.oauth_token_secret
             });
             
             if (isAndroid) { // we have to wait until now to close the modal window on Android: http://developer.appcelerator.com/question/91261/android-probelm-with-httpclient
@@ -153,9 +153,9 @@ twitter.Twitter = (function(global) {
             }
           }, function(data) {
             self.fireEvent('login', {
-              success: false,
-              error: "Failure to fetch access token, please try again.",
-              result: data
+              "success": false,
+              "error": "Failure to fetch access token, please try again.",
+              "result": data
             });
           });
         }
@@ -179,10 +179,10 @@ twitter.Twitter = (function(global) {
       // seems to do the trick on iOS/Android.
       setTimeout(function() {
         self.fireEvent('login', {
-          success: true,
-          error: false,
-          accessTokenKey: self.accessTokenKey,
-          accessTokenSecret: self.accessTokenSecret
+          "success": true,
+          "error": false,
+          "accessTokenKey": self.accessTokenKey,
+          "accessTokenSecret": self.accessTokenSecret
         });
       }, 1);
     } else {
@@ -195,9 +195,9 @@ twitter.Twitter = (function(global) {
         },
         function(data) {
           self.fireEvent('login', {
-            success: false,
-            error: "Failure to fetch access token, please try again.",
-            result: data
+            "success": false,
+            "error": "Failure to fetch access token, please try again.",
+            "result": data
           });
         }
       );
@@ -221,16 +221,16 @@ twitter.Twitter = (function(global) {
       data: params,
       success: function(data) {
         callback.call(self, {
-          success: true,
-          error: false,
-          result: data
+          "success": true,
+          "error": false,
+          "result": data
         });
       },
       failure: function(data) { 
         callback.call(self, {
-          success: false,
-          error: "Request failed",
-          result: data
+          "success": false,
+          "error": "Request failed",
+          "result": data
         });
       }
     });

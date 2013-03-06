@@ -962,7 +962,7 @@ jsoauth.OAuth = (function (global) {
      * Base64 encode a string
      * @param string {string} the string to be base64 encoded
      */
-    if (global.btoa) { Ti.API.debug('btoa defined!') }
+    if (global.btoa) { Titanium.API.debug('btoa defined!') }
     global.btoa = global.btoa || function (string) {
         var i = 0, length = string.length, ascii, index, output = '';
 
