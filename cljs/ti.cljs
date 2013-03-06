@@ -242,12 +242,12 @@ pattern/selector of that value, if a string."
 (defn twitter-logged-in? [] (get-prop-string "twitterAccessTokenKey"))
 (defn twitter-login-button
   "Creates a Twitter login button, that handles the action and propagates the corresponding
-login event to all listeners registered on Twitter.
-NOTE: first argument is the UI creator for image views, accepting a hash of options"
-  [image-view-creator & {:as opts}]
+login event to all listeners registered on Twitter."
+  [& {:as opts}]
   (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
-  (let [but (image-view-creator opts)
+  (let [but (create-image-view opts)
         flipImage #(set! (.-image but) (str "/images/twitter-" (if % "out" "in") ".png"))]
+    (debug "twitter-login-button created button " but)
     (flipImage (twitter-logged-in?))
     (ti/click but (fn [e] (debug "clicking Twitter button when logged in is " (twitter-logged-in?))
                     (if (twitter-logged-in?) (twitter-logout) (twitter-authorize))))
