@@ -54,10 +54,10 @@
   (when config (def *default-config* config))
   (when use-twitter
     (let [twitter-entry twitter/Twitter]
-      (def *twitter-client* (twitter-entry (utils/jsify {:accessTokenKey (get-prop-string "twitterAccessTokenKey")
-       :accessTokenSecret (get-prop-string "twitterAccessTokenSecret")
-       :consumerKey twitter-consumer-key
-       :consumerSecret twitter-consumer-secret}))))
+      (def *twitter-client* (twitter-entry (js-obj "accessTokenKey" (get-prop-string "twitterAccessTokenKey")
+       "accessTokenSecret" (get-prop-string "twitterAccessTokenSecret")
+       "consumerKey" twitter-consumer-key
+       "consumerSecret" twitter-consumer-secret))))
       (twitter-bind "login" (fn [e]
                           (set-prop-string "twitterAccessTokenKey" (:accessTokenKey e))
                           (set-prop-string "twitterAccessTokenSecret" (:accessTokenSecret e))))
