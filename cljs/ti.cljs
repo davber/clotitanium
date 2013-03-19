@@ -120,18 +120,26 @@ NOTE: it is currently only looking for a property 'autoPurge' in the view (proxy
   [view]
   (set! (.-autoPurge view) true))
 
+(defn- cache-key
+  "If paramater is a proper selector, a canonical version is returned, otherwise
+nil. We currently support strings and maps (from :context and :selector) as selectors.
+NOTE: this will for instance yield nil for a passed view"
+  [selector]
+  (cond
+    ((some-fn string? symbol? keyword?) selector) (-> selector name keyword)
+    (map? selector) selector
+    :else nil))
+      
 (defn- cache-view
-  "Cache a view given the passed selector, which is currently
-assumed to be the :id. We convert the selector to a keyword.
+  "Cache a view given the passed selector, relative or absolute.
 NOTE: it is automatically invoked upon creation of views, which can have a special :context key as one of the
 creation options, basically making the view unique relative a context (view)"
   [selector view]
-  ;; If the selector is not nameable, we catch the exception
-  (try
-    (let [key (-> selector name keyword)]
+  (if-let [key (cache-key selector)]
+    (do
+      (info (str "cache-view with selector " selector " (being key " key "): ") view)
       (swap! *views* assoc key view))
-    (catch js/Error err
-      (warn "cache-view got a weird selector: " selector))))
+    (throw (js/Error. (str "Tried to cache-view of invalid selector" selector)))))
 
 (defn uncache-view
   "Uncache a view, which includes all other views that has this as its context.
@@ -158,23 +166,21 @@ This includes calling uncache-view"
   "Select the view based on the given selector, or nil if it can't be found.
 NOTE: this is always zero or one view. We convert selectors to
 keywords.
-TODO: right now we assume the selector is the :id of a view"
+NOTE: exception thrown when selector is invalid"
   [selector]
-  (when ((some-fn symbol? keyword? string?) selector)
-    (let [key (-> selector name keyword)]
-        (get @*views* key))))
+  (if-let [key (cache-key selector)]
+    (get @*views* key)
+    (throw (js/Error. (str "select-view with invalid selector " selector)))))
 
 (defn get-view
   "Get the view associated with the parameter, which could either
 be the value itself, if a view, or the view corresponding to the
-pattern/selector of that value, if a string."
+pattern/selector of that value.
+An exception is thrown if the selector was valid and yet not found."
   [selector]
-  (let [view ((some-fn select-view identity) selector)]
-    (when ((some-fn map? not string?) view)
-      (throw (js/Error. (str "could not find view for selector " selector))))
-    view))
+  ;; TODO: we apply the cache-key transformer an extra time here
+  (if (cache-key selector) (select-view selector) selector))
       
-
 ;; TODO: use either multi method or protocol instead of this explicit
 ;; fetching of views
 
@@ -502,6 +508,7 @@ object"
   #(let [js-dict (js-obj)]
     (doseq [[k v] %]
       (aset js-dict (name k) (if keep-clj v (utils/jsify v))))
+    (println (str "event-encoder encoded " %))
     js-dict))
 
 (defn- event-decoder
@@ -509,10 +516,14 @@ object"
 NOTE: this is almost but not entirely the duality of 'event-encoder'
 since it yields an entire (Clojure-formatted) event object"
   [& [keep-clj]]
-  #(let [convert (if keep-clj identity utils/cljify)]
-     ;; TODO: we force evaluation (doall...) in order to facilitate
-     ;; debugging
-     (into {} (doall (map (juxt (comp keyword name) (comp convert (partial aget %))) (js-keys %))))))
+  #(let [convert (if keep-clj identity utils/cljify)
+         keys (js-keys %)
+         ;; TODO: we force evaluation (doall...) in order to facilitate
+         ;; debugging
+         converted (into {} (doall (map (juxt (comp keyword name) (comp convert (partial aget %))) keys)))]
+     (println (str "event-decoder found js keys " keys))
+     (println (str "event-decoder decoded to " converted))
+     converted))
 
 (defn listen
   "Listen to global Titanium App events.
