@@ -3,11 +3,11 @@
   (:require ti styles
   	[clojure.string :as string]
   	;; TODO: we can ONLY include this namespace for mobileweb deployments!
-  	[clojure.browser.repl :as repl]
+  	;;[clojure.browser.repl :as repl]
   	))
 
 ;; We connect to a REPL server if we reside in a web environment
-(when (ti/web?) (repl/connect "http://localhost:9191/repl"))
+;;(when (ti/web?) (repl/connect "http://localhost:9191/repl"))
 
 ;; We use the UI configutation hosted in the styles namespace; this is pure convention
 ;; and one could instead have that defined in this same file, but not recommended..."
