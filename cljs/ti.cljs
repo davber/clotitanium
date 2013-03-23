@@ -1,5 +1,6 @@
 (ns ti
-  (:require [clojure.string :as string] [utils :as utils] twitter)
+  (:require [clojure.string :as string] [utils :as utils] twitter
+            [cljs.reader :as reader])
   (:require-macros [macros.utils :as mu])
   (:use-macros [macros.ti :only [debug warn log-via create-creator]]))
 
@@ -500,30 +501,20 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
 
 
 (defn- event-encoder
-  "Yields a function encoding a global event's dictionary entries into proper
-JS or Clojure objects, according to the :keep-clj flag.
-The resulting event object is at the top level always a JS
-object"
+  "Yields a function encoding a global event's dictionary entries into a proper
+JS object. If 'keep-clj' is set, the JS object will have a single 'clj-data' property
+which holds the map in an EDN-serialized form, otherwise, the JS object will simply be
+the JS-correspondent of the passed map"
   [& [keep-clj]]
-  #(let [js-dict (js-obj)]
-    (doseq [[k v] %]
-      (aset js-dict (name k) (if keep-clj v (utils/jsify v))))
-    (println (str "event-encoder encoded " %))
-    js-dict))
+  (if keep-clj #(js-obj "clj-data" (pr-str %))  utils/jsify)) 
 
 (defn- event-decoder
   "Yields a function decoding a global event.
-NOTE: this is almost but not entirely the duality of 'event-encoder'
-since it yields an entire (Clojure-formatted) event object"
+If 'keep-clj' is set a JS object with a 'data' property holding the
+serialized Clojure map is expected, otherwise a regular JS object is expected.
+NOTE: the NON-Clojure properties are lost completely when 'keep-clj' is set!"
   [& [keep-clj]]
-  #(let [convert (if keep-clj identity utils/cljify)
-         keys (js-keys %)
-         ;; TODO: we force evaluation (doall...) in order to facilitate
-         ;; debugging
-         converted (into {} (doall (map (juxt (comp keyword name) (comp convert (partial aget %))) keys)))]
-     (println (str "event-decoder found js keys " keys))
-     (println (str "event-decoder decoded to " converted))
-     converted))
+  (if keep-clj #(reader/read-string (aget % "clj-data")) utils/cljify))
 
 (defn listen
   "Listen to global Titanium App events.
