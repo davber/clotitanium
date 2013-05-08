@@ -19,7 +19,7 @@ In order to use this abstraction, you need to:
 
 You can compile and run the sample application by:
 
-* `git submodule update`
+* `git submodule init`
 * `cd samples/skeleton`
 * `lein cljsbuild once`
 * `titanium build --platform iphone`
