@@ -9,7 +9,7 @@
         <target device="android">true</target>
         <target device="blackberry">false</target>
     </deployment-targets>
-    <sdk-version>3.1.0.v20130130144406</sdk-version>
+    <sdk-version>3.2.0</sdk-version>
     <id>com.davber.clotitanium.skeleton</id>
     <name>ClotitaniumSkeleton</name>
     <version>1.0.0</version>
