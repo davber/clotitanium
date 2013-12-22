@@ -10,7 +10,7 @@
         <target device="android">true</target>
         <target device="blackberry">false</target>
     </deployment-targets>
-    <sdk-version>3.2.0</sdk-version>
+    <sdk-version>3.2.0.GA</sdk-version>
     <id>com.davber.clotitanium.skeleton</id>
     <name>ClotitaniumSkeleton</name>
     <version>1.0.0</version>
@@ -18,7 +18,7 @@
     <url>http://blog.davber.com</url>
     <description>A skeleton project using Clotitanium</description>
     <copyright>2013 by davber</copyright>
-    <icon>appicon.png</icon>
+    <icon>default.png</icon>
     <persistent-wifi>false</persistent-wifi>
     <prerendered-icon>false</prerendered-icon>
     <statusbar-style>default</statusbar-style>
