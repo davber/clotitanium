@@ -1,7 +1,7 @@
 (defproject skeleton "0.0.1"
   :description "Skeleton sample for the Clotitanium library"
-  :dependencies [[org.clojure/clojure "1.4.0"]]
-  :plugins [[lein-cljsbuild "0.3.0"]]
+  :dependencies [[org.clojure/clojure "1.5.1"] [org.clojure/clojurescript "0.0-2127"]]
+  :plugins [[lein-cljsbuild "1.0.1"]]
   :source-paths ["../../modules/cljsutils/cljs-macros" "../../cljs-macros"]
   :cljsbuild {
     :repl-listen-port 9191
