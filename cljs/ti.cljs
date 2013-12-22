@@ -94,6 +94,14 @@ This also converts the classes in the string to keywords"
 ;; either strings or maps with :selector and :context
 (def ^:private *views* (atom {}))
 
+(defn- get-classes
+  "Get the classes specified in the 'cls' key of the given option hash, which
+   can be a single space-delimited string/keyword or a sequene of strings/keywords.
+   Will return a sequence of keywords"
+  [opts]
+  (when-let [cls (:cls opts)]
+	(map keyword (if (seq? cls) cls (string/split (name cls) #" ")))))
+
 (defn- extend-config
   "Extend the given configuration based on :cls, including setting the :cls
 property from the :id property if not given. This includes changing :cls
@@ -103,8 +111,8 @@ and :id attributes to keywords"
   ;; We get the options for all classes and the ID and merge those with
   ;; the explicit options
   
-  (let [explicit-clses (if (empty? (:cls opts)) [] (map keyword (string/split (-> opts :cls name) #" ")))
-        derived-clses (if (empty? (:id opts)) [] [(-> opts :id name keyword)])
+  (let [explicit-clses (get-classes opts)
+        derived-clses (if-let [the-id (:id opts)] [(-> the-id name keyword)] [])
         clses (set (concat explicit-clses derived-clses))
         cls-opts (map default-config clses)
         extended-opts (merge (apply merge cls-opts) opts)]
@@ -131,6 +139,9 @@ NOTE: this will for instance yield nil for a passed view"
     (map? selector) selector
     :else nil))
       
+;; Forward declaring
+(declare info)
+	  
 (defn- cache-view
   "Cache a view given the passed selector, relative or absolute.
 NOTE: it is automatically invoked upon creation of views, which can have a special :context key as one of the
@@ -241,6 +252,7 @@ An exception is thrown if the selector was valid and yet not found."
 ;; in this wrapper module
 ;;
 
+(declare create-image-view)
 (declare twitter-logout)
 (declare twitter-bind)
 (defn twitter-authorize []
