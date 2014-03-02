@@ -18,9 +18,12 @@
 ;; for the 'cls' we use
 ;; NOTE: we use internationalization here for the welcome text.
   
-(def *account-win* (ti/create-window {:cls :account-win :children [(ti/create-label {:id :welcome-text :text "Welcome!"})]}))
-(def *tabs* (map #(ti/create-tab {:title % :id (str % "-tab")}) ["Friends" "Search"]))
-(def *main-tabs* (ti/create-tab-group {:cls :stdWin :tabs (conj *tabs* (ti/create-tab {:window *account-win*}))}))
-(ti/click :welcome-text #(ti/set-value :welcome-text "You clicked, sir!"))
+(def *tabs* (map (fn [name]
+  (let [label (ti/create-label {:id (str name "-text") :text name})
+        win (ti/create-window {:cls (str name "-win") :children [label]})
+        tab (ti/create-tab {:title name :id (str name "-tab") :window win})]
+    (ti/click label #(ti/set-value label (str "You clicked on " name)))
+    tab))
+  ["Friends" "Search"]))
+(def *main-tabs* (ti/create-tab-group {:cls :stdWin :tabs *tabs*}))
 (ti/open *main-tabs*)
-
