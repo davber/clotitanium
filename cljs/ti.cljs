@@ -4,6 +4,10 @@
   (:require-macros [macros.utils :as mu])
   (:use-macros [macros.ti :only [debug warn log-via create-creator]]))
 
+;; We want print functions to work...
+;; (def *print-fn* Titanium/trace)
+(enable-console-print!)
+
 (def *platform* {:osname Titanium.Platform/osname
                  :version Titanium.Platform/version
                  :width Titanium.Platform.displayCaps/platformWidth
@@ -315,7 +319,8 @@ depending on the type of field"
 (defn rows [table-view]
   (mapcat #(.-rows %) (sections table-view)))
 (defn open [view]
-  (.open (get-view view)))
+  (let [v (get-view view)]
+    (.open v)))
 (defn close
   ([view] (let [view (get-view view)]
             (.close view)
