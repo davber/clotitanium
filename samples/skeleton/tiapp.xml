@@ -3,7 +3,7 @@
     <guid>63576570-3ab9-482d-94c8-b6b13d7dab86</guid>
     <property name="ti.android.runtime">v8</property>
     <deployment-targets>
-        <target device="tizen">false</target>
+        <target device="tizen">true</target>
         <target device="mobileweb">true</target>
         <target device="iphone">true</target>
         <target device="ipad">true</target>
