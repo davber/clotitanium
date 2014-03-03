@@ -77,23 +77,22 @@
   (when config (def *default-config* config))
   (when use-fb
     (def *fb* (js/require "facebook"))
-    (set! (.-appid *fb*) fb-appid)
-    (when fb-permissions (set! (.-permissions (utils/jsify fb-permissions)))))
+    (when (has-fb?) (set! (.-appid *fb*) fb-appid))
+    (when (and (has-fb?) fb-permissions) (set! (.-permissions (utils/jsify fb-permissions)))))
   (when use-twitter
     (let [twitter-entry twitter/Twitter]
       (def *twitter-client* (twitter-entry (js-obj "accessTokenKey" (get-prop-string "twitterAccessTokenKey")
        "accessTokenSecret" (get-prop-string "twitterAccessTokenSecret")
        "consumerKey" twitter-consumer-key
        "consumerSecret" twitter-consumer-secret))))
-      (twitter-bind "login" (fn [e]
-                          (set-prop-string "twitterAccessTokenKey" (:accessTokenKey e))
-                          (set-prop-string "twitterAccessTokenSecret" (:accessTokenSecret e))))
-      (twitter-bind "logout" (fn [e] (doseq [prop ["twitterAccessTokenKey" "twitterAccessTokenSecret"]]
-                                   (debug "setting prop to nil: " prop)
-                                   (set-prop-string prop nil)))))
+      (when (has-twitter?)
+        (twitter-bind "login" (fn [e]
+          (set-prop-string "twitterAccessTokenKey" (:accessTokenKey e))
+          (set-prop-string "twitterAccessTokenSecret" (:accessTokenSecret e))))
+        (twitter-bind "logout" (fn [e] (doseq [prop ["twitterAccessTokenKey" "twitterAccessTokenSecret"]]
+          (set-prop-string prop nil))))))
   (when use-cloud
     (def *cloud* (js/require "ti.cloud"))))
-
 
 (defn l
   "Get the internationalized string for the given property"
@@ -251,21 +250,37 @@ An exception is thrown if the selector was valid and yet not found."
         row (get-view row)]
     (.deleteRow view row js-opts)
     (when (auto-purge? row) (purge-view row))))
+(defn has-fb?
+  "Does FB exist and has it been initialized properly?"
+  []
+  *fb*)
 (defn fb-login-button [& {:as opts}]
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
   (.createLoginButton *fb* (utils/jsify opts)))
-(defn fb-authorize [] (.authorize *fb*))
-(defn fb-token [] (.-accessToken *fb*))
-(defn fb-logout [] (.logout *fb*))
-(defn fb-logged-in? [] (.-loggedIn *fb*))
+(defn fb-authorize []
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
+  (.authorize *fb*))
+(defn fb-token []
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
+  (.-accessToken *fb*))
+(defn fb-logout []
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
+  (.logout *fb*))
+(defn fb-logged-in? []
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
+  (.-loggedIn *fb*))
 (defn fb-bind
   "Register a listener for FB events"
   [evt cb]
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
   (.addEventListener *fb* evt (comp cb utils/cljify)))
 (defn fb-request [path opts & {:keys [method cb] :or {method "POST"}}]
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
   (let [real-cb (or cb #(debug (str "FB request " path " with opts " opts " yielded event ") %))]
     (.requestWithGraphPath *fb* path
       (utils/jsify opts) (or method "POST") (comp real-cb utils/cljify))))
 (defn fb-message [msg & {:keys [cb link picture]}]
+  (when-not *fb* (throw "FB not instalized properly or not existing on platform"))
   (fb-request "me/feed" {:message msg :link link :picture picture} :cb cb))
 ;;
 ;; TODO: we should not repeat virtually identical logic for FB and Twitter
@@ -276,6 +291,10 @@ An exception is thrown if the selector was valid and yet not found."
 (declare create-image-view)
 (declare twitter-logout)
 (declare twitter-bind)
+(defn has-twitter?
+  "Does Twitter exist and has it been initialized properly?"
+  []
+  *twitter-client*)
 (defn twitter-authorize []
   (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
   (.authorize *twitter-client*))
