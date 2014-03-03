@@ -5,13 +5,24 @@
   (:use-macros [macros.ti :only [debug warn log-via create-creator]]))
 
 ;; We want print functions to work...
-;; (def *print-fn* Titanium/trace)
 (enable-console-print!)
 
-(def *platform* {:osname Titanium.Platform/osname
-                 :version Titanium.Platform/version
-                 :width Titanium.Platform.displayCaps/platformWidth
-                 :height Titanium.Platform.displayCaps/platformHeight})
+;; We bind a few variables to some important Titanium objects
+(def *ti* js/Titanium)
+(def *ti-platform* (.-Platform *ti*))
+(def *ti-ui* (.-UI *ti*))
+(def *ti-app* (.-App *ti*))
+(def *ti-props* (.-Properties *ti-app*))
+(def *ti-fb* (.-Facebook *ti*))
+(def *ti-media* (.-Media *ti*))
+(def *ti-fs* (.-Filesystem *ti*))
+(def *ti-api* (.-API *ti*))
+(def *ti-stream (.-Stream *ti*))
+
+(def *platform* {:osname (.-osname *ti-platform*)
+                 :version (.-version *ti-platform*)
+                 :width (.. *ti-platform* -displayCaps -platformWidth)
+                 :height (.. *ti-platform* -displayCaps -platformHeight)})
 
 (defn iphone? [] (= (:osname *platform*) "iphone"))
 (defn ipad? [] (= (:osname *platform*) "ipad"))
@@ -19,18 +30,18 @@
 (defn android? [] (= (:osname *platform*) "android"))
 (defn web? [] (= (:osname *platform*) "mobileweb"))
 
-(def FILL Titanium.UI/FILL)
-(def SIZE Titanium.UI/SIZE)
+(def FILL (.-FILL *ti-ui*))
+(def SIZE (.-SIZE *ti-ui*))
 
 ;; Access of Titanium properties
 (defn get-prop-string
   "Get a string property"
   [prop]
-  (.getString Titanium.App/Properties prop))
+  (.getString *ti-props* prop))
 (defn set-prop-string
   "Set a string property"
   [prop value]
-  (.setString Titanium.App/Properties prop value))
+  (.setString *ti-props* prop value))
 
 ;; The UI configuration, which is a hash from IDs and 'cls' attributes to styling.
 (def ^:private *default-config* {})
@@ -111,10 +122,10 @@ This also converts the classes in the string to keywords"
 property from the :id property if not given. This includes changing :cls
 and :id attributes to keywords"
   [opts]
-  
+
   ;; We get the options for all classes and the ID and merge those with
   ;; the explicit options
-  
+
   (let [explicit-clses (get-classes opts)
         derived-clses (if-let [the-id (:id opts)] [(-> the-id name keyword)] [])
         clses (set (concat explicit-clses derived-clses))
@@ -142,10 +153,10 @@ NOTE: this will for instance yield nil for a passed view"
     ((some-fn string? symbol? keyword?) selector) (-> selector name keyword)
     (map? selector) selector
     :else nil))
-      
+
 ;; Forward declaring
 (declare info)
-	  
+
 (defn- cache-view
   "Cache a view given the passed selector, relative or absolute.
 NOTE: it is automatically invoked upon creation of views, which can have a special :context key as one of the
@@ -196,7 +207,7 @@ An exception is thrown if the selector was valid and yet not found."
   [selector]
   ;; TODO: we apply the cache-key transformer an extra time here
   (if (cache-key selector) (select-view selector) selector))
-      
+
 ;; TODO: use either multi method or protocol instead of this explicit
 ;; fetching of views
 
@@ -235,18 +246,18 @@ An exception is thrown if the selector was valid and yet not found."
     (.deleteRow view row js-opts)
     (when (auto-purge? row) (purge-view row))))
 (defn fb-login-button [& {:as opts}]
-  (.createLoginButton Titanium/Facebook (utils/jsify opts)))
-(defn fb-authorize [] (.authorize Titanium/Facebook))
-(defn fb-token [] Titanium.Facebook/accessToken)
-(defn fb-logout [] (.logout Titanium/Facebook))
-(defn fb-logged-in? [] Titanium.Facebook/loggedIn)
+  (.createLoginButton *ti-fb* (utils/jsify opts)))
+(defn fb-authorize [] (.authorize *ti-fb*))
+(defn fb-token [] (.-accessToken *ti-fb*))
+(defn fb-logout [] (.logout *ti-fb*))
+(defn fb-logged-in? [] (.-loggedIn *ti-fb*))
 (defn fb-bind
   "Register a listener for FB events"
   [evt cb]
-  (.addEventListener Titanium/Facebook evt (comp cb utils/cljify)))
+  (.addEventListener *ti-fb* evt (comp cb utils/cljify)))
 (defn fb-request [path opts & {:keys [method cb] :or {method "POST"}}]
   (let [real-cb (or cb #(debug (str "FB request " path " with opts " opts " yielded event ") %))]
-    (.requestWithGraphPath Titanium/Facebook path
+    (.requestWithGraphPath *ti-fb* path
       (utils/jsify opts) (or method "POST") (comp real-cb utils/cljify))))
 (defn fb-message [msg & {:keys [cb link picture]}]
   (fb-request "me/feed" {:message msg :link link :picture picture} :cb cb))
@@ -289,7 +300,7 @@ login event to all listeners registered on Twitter."
 (defn twitter-message [msg & {:keys [cb source link picture]}]
   (when-not *twitter-client* (throw "Twitter is not initialized properly; be sure to use :use-twitter with init"))
   (.request *twitter-client* "1.1/statuses/update.json" (utils/jsify {:status msg}) "POST" cb))
-                                                   
+
 (defn open
   [view & [opts]] (.open (get-view view) (when opts (utils/jsify opts))))
 (defn set-visible
@@ -334,12 +345,12 @@ depending on the type of field"
 (defn animate
   "Animate an open view based on the passed configuration"
   [view opts]
-  (let [anim (.createAnimation Titanium/UI (utils/jsify opts))]
+  (let [anim (.createAnimation *ti-ui* (utils/jsify opts))]
     (.animate (get-view view) anim)))
 (defn open-animate
   "Open a view with an animation based on the passed configuration"
   [view opts]
-  (let [anim (.createAnimation Titanium/UI (utils/jsify opts))]
+  (let [anim (.createAnimation *ti-ui* (utils/jsify opts))]
     (.open (get-view view) anim)))
 (defn show-camera
   "Show the camera, with an optional :take-now key to just take the picture without showing a camera UI"
@@ -351,19 +362,19 @@ depending on the type of field"
         error-cb (when error-cb (comp error-cb utils/cljify))
         opts (if error-cb (assoc opts :error error-cb) opts)]
     (if take-now
-      (.takePicture Titanium/Media (utils/jsify opts))
-      (.showCamera Titanium/Media (utils/jsify opts)))))
+      (.takePicture *ti-media* (utils/jsify opts))
+      (.showCamera *ti-media* (utils/jsify opts)))))
 
 (defn hide-camera
   "Hide the camera"
   []
   (debug "about to hide camera")
-  (.hideCamera Titanium/Media)
+  (.hideCamera *ti-media*)
   (debug "did hide camera"))
 (defn camera-supported?
   "Does the device has a camera?"
   []
-  (.-isCameraSupported Titanium/Media))
+  (.-isCameraSupported *ti-media*))
 (defn show-alert
   "Shows a regular alert dialog"
   [& msgs]
@@ -371,12 +382,12 @@ depending on the type of field"
 (defn temp-path
   "Get the path to a temporary file with the given base name and extension"
   [name ext]
-  (str (.getTempDirectory Titanium/Filesystem) (.getSeparator Titanium/Filesystem)
+  (str (.getTempDirectory *ti-fs*) (.getSeparator *ti-fs*)
        name "_"  (utils/uuid) "." ext))
 (defn file
   "Get file corresponding to the given path"
   [path]
-  (.getFile Titanium/Filesystem path))
+  (.getFile *ti-fs* path))
 (defn file->blob
   "Creates a blob from a (transient TIFile) file object"
   [file]
@@ -411,7 +422,7 @@ depending on the type of field"
 ;; A helper to create toolbars
 
 (defn toolbar [opts]
-  (if (js* "Titanium.UI.iOS")
+  (if (.-iOS *ti-ui*)
     (create "toolbar" "iOS" opts)
     (let [opts (assoc opts :layout "horizontal")
           view (create-view opts)]
@@ -492,7 +503,7 @@ platform string if a nestedly named creator is sought, such as 'iOS'"
                        :scrollable-view :switch :table-view-section)
 
 
-(defn photos-create [opts cb] 
+(defn photos-create [opts cb]
   (when-not *cloud*
     (throw "The Titanium.Cloud was not initialized properly. Use 'init' with :use-cloud set to true"))
   (let [js-opts (utils/jsify opts)]
@@ -523,7 +534,7 @@ JS object. If 'keep-clj' is set, the JS object will have a single 'clj-data' pro
 which holds the map in an EDN-serialized form, otherwise, the JS object will simply be
 the JS-correspondent of the passed map"
   [& [keep-clj]]
-  (if keep-clj #(js-obj "clj-data" (pr-str %))  utils/jsify)) 
+  (if keep-clj #(js-obj "clj-data" (pr-str %))  utils/jsify))
 
 (defn- event-decoder
   "Yields a function decoding a global event.
@@ -538,11 +549,11 @@ NOTE: the NON-Clojure properties are lost completely when 'keep-clj' is set!"
 NOTE: we have to make sure to register listeners with the same
 flag value for 'keep-clj' as for the firing of such events."
   [evt cb & {:keys [keep-clj]}]
-  (.addEventListener Titanium/App evt
+  (.addEventListener *ti-app* evt
     (comp cb (event-decoder keep-clj))))
 
 (defn fire
   "Fire a global event"
   [evt evt-obj & {:keys [keep-clj]}]
   (let [encoded-evt ((event-encoder keep-clj) evt-obj)]
-    (.fireEvent Titanium/App evt encoded-evt)))
+    (.fireEvent *ti-app* evt encoded-evt)))

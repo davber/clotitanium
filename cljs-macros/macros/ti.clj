@@ -22,7 +22,7 @@
   "Helper function logging via the given severity level mechanism.
 We expect the level to be a Named."
   [level msg]
-  `(. Titanium/API ~((comp symbol name) level) ~msg))
+  `(. ti/*ti-api* ~((comp symbol name) level) ~msg))
 
 ;; TODO: create a logger creator instead for specific levels, since these are quite similar
 
@@ -54,11 +54,10 @@ We expect the level to be a Named."
   "Surrounds a body with output of memory available before and after the body executes, and also
 return the value of the body."
   [label & body]
-  `(let [before# Titanium.Platform/availableMemory]
+  `(let [before# (.-availableMemory ti/*ti-platform*)]
      (log-via :debug (str ~label " before memory is " before# " MB"))
      (let [value# (do ~@body)
-           after# Titanium.Platform/availableMemory]
+           after# (.-availableMemory ti/*ti-platform*)]
        (log-via :debug (str ~label " after memory is " after# " MB"))
        (log-via :debug (str ~label " diff of " (- after# before#) " MB"))
        value#)))
-
