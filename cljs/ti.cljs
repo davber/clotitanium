@@ -13,7 +13,6 @@
 (def *ti-ui* (.-UI *ti*))
 (def *ti-app* (.-App *ti*))
 (def *ti-props* (.-Properties *ti-app*))
-(def *ti-fb* (.-Facebook *ti*))
 (def *ti-media* (.-Media *ti*))
 (def *ti-fs* (.-Filesystem *ti*))
 (def *ti-api* (.-API *ti*))
@@ -47,9 +46,16 @@
 (def ^:private *default-config* {})
 
 ;; Some forward-declared variables
+(declare *twitter-client*)
+;; NOTE: you need to setup Twitter and FB via "init"
+(declare *twitter-consumer-key*)
+(declare *twitter-consumer-secret*)
+(declare *fb*)
 
 (declare create)
 (declare create-view)
+;; FB object
+(declare *fb*)
 ;; Twitter stuff
 (declare *twitter-client*)
 (declare *twitter-consumer-key*)
@@ -66,8 +72,13 @@
    NOTE: if using Twitter, you should set the properties 'twitterAccessTokenKey'
    and 'twitterAccessTokenSecret and ALSO pass proper 'twitter-consumer-key' and
    'twitter-consumer-secret' keyed parameters"
-  [& {:keys [config use-cloud use-twitter twitter-consumer-key twitter-consumer-secret]}]
+  [& {:keys [config use-cloud use-fb fb-appid fb-permissions
+             use-twitter twitter-consumer-key twitter-consumer-secret]}]
   (when config (def *default-config* config))
+  (when use-fb
+    (def *fb* (js/require "facebook"))
+    (set! (.-appid *fb*) fb-appid)
+    (when fb-permissions (set! (.-permissions (utils/jsify fb-permissions)))))
   (when use-twitter
     (let [twitter-entry twitter/Twitter]
       (def *twitter-client* (twitter-entry (js-obj "accessTokenKey" (get-prop-string "twitterAccessTokenKey")
@@ -91,11 +102,6 @@
 
 (declare *my-cards*)
 (when *cloud* (set! (.-debug *cloud*) true))
-
-(declare *twitter-client*)
-;; NOTE: you need to setup Twitter via "init"
-(declare *twitter-consumer-key*)
-(declare *twitter-consumer-secret*)
 
 ;; Get default settings for the given class (or classes)
 (defn- default-config
@@ -246,18 +252,18 @@ An exception is thrown if the selector was valid and yet not found."
     (.deleteRow view row js-opts)
     (when (auto-purge? row) (purge-view row))))
 (defn fb-login-button [& {:as opts}]
-  (.createLoginButton *ti-fb* (utils/jsify opts)))
-(defn fb-authorize [] (.authorize *ti-fb*))
-(defn fb-token [] (.-accessToken *ti-fb*))
-(defn fb-logout [] (.logout *ti-fb*))
-(defn fb-logged-in? [] (.-loggedIn *ti-fb*))
+  (.createLoginButton *fb* (utils/jsify opts)))
+(defn fb-authorize [] (.authorize *fb*))
+(defn fb-token [] (.-accessToken *fb*))
+(defn fb-logout [] (.logout *fb*))
+(defn fb-logged-in? [] (.-loggedIn *fb*))
 (defn fb-bind
   "Register a listener for FB events"
   [evt cb]
-  (.addEventListener *ti-fb* evt (comp cb utils/cljify)))
+  (.addEventListener *fb* evt (comp cb utils/cljify)))
 (defn fb-request [path opts & {:keys [method cb] :or {method "POST"}}]
   (let [real-cb (or cb #(debug (str "FB request " path " with opts " opts " yielded event ") %))]
-    (.requestWithGraphPath *ti-fb* path
+    (.requestWithGraphPath *fb* path
       (utils/jsify opts) (or method "POST") (comp real-cb utils/cljify))))
 (defn fb-message [msg & {:keys [cb link picture]}]
   (fb-request "me/feed" {:message msg :link link :picture picture} :cb cb))
