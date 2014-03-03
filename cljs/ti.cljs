@@ -4,8 +4,10 @@
   (:require-macros [macros.utils :as mu])
   (:use-macros [macros.ti :only [debug warn log-via create-creator]]))
 
-;; We want print functions to work...
+;; TODO: we would like to route console print to Titanium info instead
 (enable-console-print!)
+;; All printing goes via the Titanium info function
+;; (set! *print-fn* (fn [x] (ti/info x)))
 
 ;; We bind a few variables to some important Titanium objects
 (def *ti* js/Titanium)
@@ -75,11 +77,13 @@
   [& {:keys [config use-cloud use-fb fb-appid fb-permissions
              use-twitter twitter-consumer-key twitter-consumer-secret]}]
   (when config (def *default-config* config))
-  (when use-fb
+  ;; We don't even try with FB when using mobile web
+  (when (and (not (web?)) use-fb)
     (def *fb* (js/require "facebook"))
     (when (has-fb?) (set! (.-appid *fb*) fb-appid))
     (when (and (has-fb?) fb-permissions) (set! (.-permissions (utils/jsify fb-permissions)))))
-  (when use-twitter
+  ;; We don't even try with Twitter when using mobile web
+  (when (and (not (web?)) use-twitter)
     (let [twitter-entry twitter/Twitter]
       (def *twitter-client* (twitter-entry (js-obj "accessTokenKey" (get-prop-string "twitterAccessTokenKey")
        "accessTokenSecret" (get-prop-string "twitterAccessTokenSecret")
